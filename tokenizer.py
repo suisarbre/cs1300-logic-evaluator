@@ -1,10 +1,12 @@
 from logicalToken import *
 
 class Tokenizer:
+    # Tokenizes a logical expression
     def __init__(self, str):
         self.str = str
         self.tokens = []
-        
+        self.tokenize()
+        self.postfix = self.to_postfix()
     def tokenize(self):
         i = 0
         while i < len(self.str):
@@ -53,6 +55,30 @@ class Tokenizer:
             
             i += 1  # Move to the next character
                 
+    def to_postfix(self):
+        precedence = {'NOT': 3, 'AND': 2, 'OR': 1, 'XOR': 1, 'IMPLIES': 0, 'IFF': 0}
+        stack = []
+        postfix = []
+        
+        for token in self.tokens:
+            if token.type == 'Prop':
+                postfix.append(token)
+            elif token.type == 'LPAREN':
+                stack.append(token)
+            elif token.type == 'RPAREN':
+                while stack and stack[-1].type != 'LPAREN':
+                    postfix.append(stack.pop())
+                stack.pop()  # pop the 'LPAREN'
+            else:  # it's an operator
+                while stack and precedence.get(stack[-1].type, -1) >= precedence[token.type]:
+                    postfix.append(stack.pop())
+                stack.append(token)
+        
+        while stack:
+            postfix.append(stack.pop())
+        
+        return postfix
+    
     def __str__(self):
         return '\n'.join([str(token) for token in self.tokens])
     

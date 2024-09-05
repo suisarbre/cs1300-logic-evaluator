@@ -1,41 +1,21 @@
 from logicalToken import *
 from tokenizer import Tokenizer
+from compoundProposition import CompoundProposition
 
 class Evaluator:
     def __init__(self, str):
         self.str = str
-        self.tokenizer = Tokenizer(str)
-        self.tokenizer.tokenize()
-        self.postfix = self.to_postfix()
+        # self.tokenizer = Tokenizer(str)
+        # self.tokenizer.tokenize()
+        # self.postfix = self.to_postfix()
+        self.compound_prop = CompoundProposition(str)
         self.prop_values = {}
         
-    def to_postfix(self):
-        precedence = {'NOT': 3, 'AND': 2, 'OR': 1, 'XOR': 1, 'IMPLIES': 0, 'IFF': 0}
-        stack = []
-        postfix = []
-        
-        for token in self.tokenizer.tokens:
-            if token.type == 'Prop':
-                postfix.append(token)
-            elif token.type == 'LPAREN':
-                stack.append(token)
-            elif token.type == 'RPAREN':
-                while stack and stack[-1].type != 'LPAREN':
-                    postfix.append(stack.pop())
-                stack.pop()  # pop the 'LPAREN'
-            else:  # it's an operator
-                while stack and precedence.get(stack[-1].type, -1) >= precedence[token.type]:
-                    postfix.append(stack.pop())
-                stack.append(token)
-        
-        while stack:
-            postfix.append(stack.pop())
-        
-        return postfix
+    
     
     def rpn(self):
         stack = []
-        for token in self.postfix:
+        for token in self.compound_prop.tokenizer.postfix:
             if token.type == 'Prop':    
                 stack.append(token)
                 token.bool = self.prop_values.get(token.value, False)
@@ -62,10 +42,27 @@ class Evaluator:
     def set_prop_values(self, values):
         self.prop_values = values
         
+    def truth_table(self):
+        for prop in self.compound_prop.literal_count:
+            print(prop, end='\t')
+        print(self.str)
+        
+        for i in range(2 ** len(self.compound_prop.literal_count)):
+            
+            # Convert integer to binary and remove '0b' prefix
+            binary_str = bin(i)[2:]
+            # Pad binary string with leading zeros to ensure it has length n
+            binary_str = binary_str.zfill(len(self.compound_prop.literal_count))
+            # print(binary_str, end='\t')
+            for index, prop in enumerate(self.compound_prop.literal_count):
+                self.prop_values[prop] = bool(int(binary_str[index]))
+                print(self.prop_values[prop], end='\t')
+            # print("Testing prop values: ", self.prop_values)
+            print(bool(self.rpn()))
     
     
 if __name__ == "__main__":
     e = Evaluator("(p ->q) & ((q -> r) -> (r -> p))")
     e.set_prop_values({'p': False, 'q': False, 'r': True})
     print(e.rpn())
-    
+    e.truth_table()
