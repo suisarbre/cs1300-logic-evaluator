@@ -65,9 +65,7 @@ class Evaluator:
     
     
 if __name__ == "__main__":
-    e = Evaluator("!(p -> q) & (p | q) <-> (p ^ q)")
-    # for tk in e.postfix:
-    #     print(tk)
-    e.set_prop_values({'p': True, 'q': False})
+    e = Evaluator("(p ->q) & ((q -> r) -> (r -> p))")
+    e.set_prop_values({'p': False, 'q': False, 'r': True})
     print(e.rpn())
     
